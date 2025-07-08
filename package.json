@@ -1,0 +1,21 @@
+{
+  "name": "battle-of-midway",
+  "version": "1.0.0",
+  "description": "A JavaScript clone of the classic arcade game 1943: The Battle of Midway",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": ["phaser", "game", "arcade", "1943", "battle-of-midway"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "dependencies": {
+    "phaser": "^3.80.0"
+  }
+}
