@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
 
 const config = {
@@ -7,7 +8,7 @@ const config = {
     height: 600,
     backgroundColor: '#2c3e50',
     parent: 'game-container',
-    scene: [GameScene],
+    scene: [MenuScene, GameScene],
     physics: {
         default: 'arcade',
         arcade: {
