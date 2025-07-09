@@ -10,9 +10,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     preload() {
-        // Create simple colored rectangles as placeholder sprites
+        // Load sprites
         this.load.image('player', 'assets/sprites/aircrafts/Aircraft_06.png');
         this.load.image('bullet', 'assets/sprites/bullets/bullet_orange0001.png');
+        this.load.image('water_tile', 'assets/sprites/environment/tex_Water.jpg');
         
         // Load enemy aircraft sprites
         this.load.image('Aircraft_01', 'assets/sprites/aircrafts/Aircraft_01.png');
@@ -21,8 +22,8 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create() {
-        // Ocean background color
-        this.cameras.main.setBackgroundColor('#1e3a8a');
+        // Create tiled water background
+        this.createWaterBackground();
 
         // Initialize player manager
         this.playerManager = new PlayerManager(this);
@@ -84,5 +85,28 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    createWaterBackground() {
+        const tileDisplaySize = 128; // How big each tile appears
+        const tileSpacing = 120; // Spacing between tiles (less than display size = overlap)
+        const gameWidth = this.cameras.main.width;
+        const gameHeight = this.cameras.main.height;
+        
+        // Calculate how many tiles we need
+        const tilesX = Math.ceil(gameWidth / tileSpacing) + 1;
+        const tilesY = Math.ceil(gameHeight / tileSpacing) + 1;
+        
+        // Create a group to hold all water tiles
+        this.waterTiles = this.add.group();
+        
+        // Create the tiled background with overlap, starting offscreen to cover edges
+        for (let x = -1; x < tilesX; x++) {
+            for (let y = -1; y < tilesY; y++) {
+                const tile = this.add.image(x * tileSpacing, y * tileSpacing, 'water_tile');
+                tile.setOrigin(0, 0); // Set origin to top-left for proper tiling
+                tile.setDisplaySize(tileDisplaySize, tileDisplaySize);
+                this.waterTiles.add(tile);
+            }
+        }
+    }
     
 }

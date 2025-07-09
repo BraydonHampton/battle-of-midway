@@ -97,6 +97,7 @@ The game uses a manager pattern for clean code organization:
 - **Player Aircraft**: Aircraft_06 (green tinted)
 - **Enemy Aircraft**: Aircraft_01, Aircraft_02, Aircraft_03 (rotated 180°)
 - **Bullets**: Orange bullet sprites with animation frames
+- **Background**: Tiled water texture
 - **UI Elements**: Text-based interface
 
 ### Available Assets
@@ -105,6 +106,10 @@ The project includes additional unused sprites for future expansion:
 - Multiple bullet colors (blue, orange, purple) with animation frames
 - Rotor animation frames for helicopters
 - Rocket projectiles
+
+### Art Credits
+- Aircraft and bullet sprites: [Chabull](https://opengameart.org/users/chabull) via OpenGameArt.org
+- Water texture: [www.GodsAndIdols.com](https://www.GodsAndIdols.com)
 
 ## 🔄 Development Phases
 
@@ -120,6 +125,7 @@ The project includes additional unused sprites for future expansion:
 - Life and scoring systems
 
 ### 🔄 Phase 3: Enhancement (In Progress)
+- [x] Tiled water background texture
 - [ ] Power-up system (weapon upgrades, health, points)
 - [ ] Sound effects and music
 - [ ] Visual effects (explosions, particles)
@@ -130,6 +136,11 @@ The project includes additional unused sprites for future expansion:
 - [ ] Game balance and difficulty scaling
 - [ ] Performance optimization
 - [ ] Mobile responsiveness
+
+## 🐛 Known Issues
+
+### Current Bugs
+- **Shooting Crashes**: Game may crash when shooting bullets - investigating collision detection issues
 
 ## 🧠 Learning Goals
 
