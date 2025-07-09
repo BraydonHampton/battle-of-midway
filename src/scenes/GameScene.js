@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
-import Enemy from '../entities/Enemy.js';
+import EnemyManager from '../managers/EnemyManager.js';
+import CollisionManager from '../managers/CollisionManager.js';
+import ScoreManager from '../managers/ScoreManager.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -30,9 +32,10 @@ export default class GameScene extends Phaser.Scene {
         // Create bullets group
         this.bullets = this.physics.add.group();
         
-        // Create enemies group and array
-        this.enemies = this.physics.add.group();
-        this.enemyInstances = [];
+        // Initialize managers
+        this.enemyManager = new EnemyManager(this);
+        this.collisionManager = new CollisionManager(this);
+        this.scoreManager = new ScoreManager(this);
 
         // Input handling
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -42,20 +45,9 @@ export default class GameScene extends Phaser.Scene {
         // Shooting cooldown
         this.shootCooldown = 0;
         this.shootDelay = 200;
-        
-        // Enemy spawning
-        this.enemySpawnTimer = 0;
-        this.enemySpawnDelay = 2000;
-        
-        // Game state
-        this.score = 0;
 
         // Game UI
-        this.scoreText = this.add.text(16, 16, 'Score: 0', {
-            fontFamily: 'Arial',
-            fontSize: 20,
-            color: '#ffffff'
-        });
+        this.scoreManager.createScoreDisplay();
 
         this.add.text(16, 50, 'Press ESC to return to menu', {
             fontFamily: 'Arial',
@@ -63,8 +55,15 @@ export default class GameScene extends Phaser.Scene {
             color: '#cccccc'
         });
         
-        // Collision detection
-        this.physics.add.overlap(this.bullets, this.enemies, this.bulletHitEnemy, null, this);
+        // Set up collision detection
+        this.collisionManager.setupCollision(
+            this.bullets, 
+            this.enemyManager.getEnemyGroup(), 
+            'bulletEnemy',
+            (bullet, enemySprite) => {
+                this.collisionManager.bulletHitEnemy(bullet, enemySprite, this.scoreManager, this.enemyManager);
+            }
+        );
     }
 
     update(time, delta) {
@@ -93,20 +92,8 @@ export default class GameScene extends Phaser.Scene {
             this.shootCooldown = time + this.shootDelay;
         }
 
-        // Enemy spawning
-        if (time > this.enemySpawnTimer) {
-            this.spawnEnemy();
-            this.enemySpawnTimer = time + this.enemySpawnDelay;
-        }
-        
-        // Update enemies
-        this.enemyInstances.forEach((enemy, index) => {
-            enemy.update();
-            // Remove destroyed enemies from array
-            if (!enemy.sprite || !enemy.sprite.active) {
-                this.enemyInstances.splice(index, 1);
-            }
-        });
+        // Update managers
+        this.enemyManager.update(time, delta);
         
         // Clean up bullets that have left the screen
         this.bullets.children.entries.forEach(bullet => {
@@ -128,30 +115,4 @@ export default class GameScene extends Phaser.Scene {
         bullet.setVelocityY(-500);
     }
     
-    spawnEnemy() {
-        const x = Phaser.Math.Between(50, 750);
-        const y = 0;
-        const aircraftTypes = ['Aircraft_01', 'Aircraft_02', 'Aircraft_03'];
-        const type = Phaser.Utils.Array.GetRandom(aircraftTypes);
-        
-        console.log('Spawning enemy:', type, 'at', x, y);
-        
-        const enemy = new Enemy(this, x, y, type);
-        this.enemies.add(enemy.sprite);
-        this.enemyInstances.push(enemy);
-        
-        console.log('Enemy created, total enemies:', this.enemyInstances.length);
-    }
-    
-    bulletHitEnemy(bullet, enemySprite) {
-        const enemy = enemySprite.enemyInstance;
-        if (enemy) {
-            const points = enemy.takeDamage(1);
-            if (points > 0) {
-                this.score += points;
-                this.scoreText.setText('Score: ' + this.score);
-            }
-        }
-        bullet.destroy();
-    }
 }
