@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import Enemy from '../entities/Enemy.js';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -7,8 +8,13 @@ export default class GameScene extends Phaser.Scene {
 
     preload() {
         // Create simple colored rectangles as placeholder sprites
-        this.load.image('player', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jINpPwAAAABJRU5ErkJggg==');
+        this.load.image('player', 'assets/sprites/aircrafts/Aircraft_06.png');
         this.load.image('bullet', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jINpPwAAAABJRU5ErkJggg==');
+        
+        // Load enemy aircraft sprites
+        this.load.image('Aircraft_01', 'assets/sprites/aircrafts/Aircraft_01.png');
+        this.load.image('Aircraft_02', 'assets/sprites/aircrafts/Aircraft_02.png');
+        this.load.image('Aircraft_03', 'assets/sprites/aircrafts/Aircraft_03.png');
     }
 
     create() {
@@ -23,6 +29,10 @@ export default class GameScene extends Phaser.Scene {
 
         // Create bullets group
         this.bullets = this.physics.add.group();
+        
+        // Create enemies group and array
+        this.enemies = this.physics.add.group();
+        this.enemyInstances = [];
 
         // Input handling
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -32,9 +42,16 @@ export default class GameScene extends Phaser.Scene {
         // Shooting cooldown
         this.shootCooldown = 0;
         this.shootDelay = 200;
+        
+        // Enemy spawning
+        this.enemySpawnTimer = 0;
+        this.enemySpawnDelay = 2000;
+        
+        // Game state
+        this.score = 0;
 
         // Game UI
-        this.add.text(16, 16, 'Score: 0', {
+        this.scoreText = this.add.text(16, 16, 'Score: 0', {
             fontFamily: 'Arial',
             fontSize: 20,
             color: '#ffffff'
@@ -45,6 +62,9 @@ export default class GameScene extends Phaser.Scene {
             fontSize: 14,
             color: '#cccccc'
         });
+        
+        // Collision detection
+        this.physics.add.overlap(this.bullets, this.enemies, this.bulletHitEnemy, null, this);
     }
 
     update(time, delta) {
@@ -73,6 +93,21 @@ export default class GameScene extends Phaser.Scene {
             this.shootCooldown = time + this.shootDelay;
         }
 
+        // Enemy spawning
+        if (time > this.enemySpawnTimer) {
+            this.spawnEnemy();
+            this.enemySpawnTimer = time + this.enemySpawnDelay;
+        }
+        
+        // Update enemies
+        this.enemyInstances.forEach((enemy, index) => {
+            enemy.update();
+            // Remove destroyed enemies from array
+            if (!enemy.sprite || !enemy.sprite.active) {
+                this.enemyInstances.splice(index, 1);
+            }
+        });
+        
         // Clean up bullets that have left the screen
         this.bullets.children.entries.forEach(bullet => {
             if (bullet.y < -10) {
@@ -91,5 +126,32 @@ export default class GameScene extends Phaser.Scene {
         bullet.setDisplaySize(4, 10);
         bullet.setTint(0xffff00);
         bullet.setVelocityY(-500);
+    }
+    
+    spawnEnemy() {
+        const x = Phaser.Math.Between(50, 750);
+        const y = 0;
+        const aircraftTypes = ['Aircraft_01', 'Aircraft_02', 'Aircraft_03'];
+        const type = Phaser.Utils.Array.GetRandom(aircraftTypes);
+        
+        console.log('Spawning enemy:', type, 'at', x, y);
+        
+        const enemy = new Enemy(this, x, y, type);
+        this.enemies.add(enemy.sprite);
+        this.enemyInstances.push(enemy);
+        
+        console.log('Enemy created, total enemies:', this.enemyInstances.length);
+    }
+    
+    bulletHitEnemy(bullet, enemySprite) {
+        const enemy = enemySprite.enemyInstance;
+        if (enemy) {
+            const points = enemy.takeDamage(1);
+            if (points > 0) {
+                this.score += points;
+                this.scoreText.setText('Score: ' + this.score);
+            }
+        }
+        bullet.destroy();
     }
 }
