@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import MenuScene from './scenes/MenuScene.js';
 import GameScene from './scenes/GameScene.js';
+import GameOverScene from './scenes/GameOverScene.js';
 
 const config = {
     type: Phaser.AUTO,
@@ -8,7 +9,7 @@ const config = {
     height: 600,
     backgroundColor: '#2c3e50',
     parent: 'game-container',
-    scene: [MenuScene, GameScene],
+    scene: [MenuScene, GameScene, GameOverScene],
     physics: {
         default: 'arcade',
         arcade: {

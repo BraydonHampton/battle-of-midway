@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import PlayerManager from '../managers/PlayerManager.js';
 import EnemyManager from '../managers/EnemyManager.js';
 import CollisionManager from '../managers/CollisionManager.js';
 import ScoreManager from '../managers/ScoreManager.js';
@@ -11,7 +12,7 @@ export default class GameScene extends Phaser.Scene {
     preload() {
         // Create simple colored rectangles as placeholder sprites
         this.load.image('player', 'assets/sprites/aircrafts/Aircraft_06.png');
-        this.load.image('bullet', 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChAI9jINpPwAAAABJRU5ErkJggg==');
+        this.load.image('bullet', 'assets/sprites/bullets/bullet_orange0001.png');
         
         // Load enemy aircraft sprites
         this.load.image('Aircraft_01', 'assets/sprites/aircrafts/Aircraft_01.png');
@@ -23,28 +24,17 @@ export default class GameScene extends Phaser.Scene {
         // Ocean background color
         this.cameras.main.setBackgroundColor('#1e3a8a');
 
-        // Create player sprite
-        this.player = this.physics.add.sprite(400, 500, 'player');
-        this.player.setDisplaySize(32, 32);
-        this.player.setTint(0x00ff00);
-        this.player.setCollideWorldBounds(true);
-
-        // Create bullets group
-        this.bullets = this.physics.add.group();
+        // Initialize player manager
+        this.playerManager = new PlayerManager(this);
+        this.playerManager.create();
         
-        // Initialize managers
+        // Initialize other managers
         this.enemyManager = new EnemyManager(this);
         this.collisionManager = new CollisionManager(this);
         this.scoreManager = new ScoreManager(this);
 
-        // Input handling
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        // ESC key for menu
         this.escKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-
-        // Shooting cooldown
-        this.shootCooldown = 0;
-        this.shootDelay = 200;
 
         // Game UI
         this.scoreManager.createScoreDisplay();
@@ -57,50 +47,36 @@ export default class GameScene extends Phaser.Scene {
         
         // Set up collision detection
         this.collisionManager.setupCollision(
-            this.bullets, 
+            this.playerManager.getBullets(), 
             this.enemyManager.getEnemyGroup(), 
             'bulletEnemy',
             (bullet, enemySprite) => {
                 this.collisionManager.bulletHitEnemy(bullet, enemySprite, this.scoreManager, this.enemyManager);
             }
         );
+        
+        // Set up player-enemy collision
+        this.collisionManager.setupCollision(
+            this.playerManager.getPlayer(),
+            this.enemyManager.getEnemyGroup(),
+            'playerEnemy',
+            (player, enemySprite) => {
+                if (!this.playerManager.isInvincible()) {
+                    this.playerManager.takeDamage();
+                }
+            }
+        );
+        
+        // Set up player manager callbacks
+        this.playerManager.setGameOverCallback(() => {
+            this.scene.start('GameOverScene', { score: this.scoreManager.getScore() });
+        });
     }
 
     update(time, delta) {
-        // Player movement
-        const speed = 300;
-        
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-speed);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(speed);
-        } else {
-            this.player.setVelocityX(0);
-        }
-
-        if (this.cursors.up.isDown) {
-            this.player.setVelocityY(-speed);
-        } else if (this.cursors.down.isDown) {
-            this.player.setVelocityY(speed);
-        } else {
-            this.player.setVelocityY(0);
-        }
-
-        // Shooting
-        if (this.spaceKey.isDown && time > this.shootCooldown) {
-            this.shootBullet();
-            this.shootCooldown = time + this.shootDelay;
-        }
-
         // Update managers
+        this.playerManager.update(time, delta);
         this.enemyManager.update(time, delta);
-        
-        // Clean up bullets that have left the screen
-        this.bullets.children.entries.forEach(bullet => {
-            if (bullet.y < -10) {
-                bullet.destroy();
-            }
-        });
 
         // Return to menu
         if (this.escKey.isDown) {
@@ -108,11 +84,5 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    shootBullet() {
-        const bullet = this.bullets.create(this.player.x, this.player.y - 20, 'bullet');
-        bullet.setDisplaySize(4, 10);
-        bullet.setTint(0xffff00);
-        bullet.setVelocityY(-500);
-    }
     
 }

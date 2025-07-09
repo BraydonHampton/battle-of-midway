@@ -5,6 +5,7 @@ export default class Enemy {
         this.sprite = scene.physics.add.sprite(x, y, type);
         this.sprite.setDisplaySize(48, 48);
         this.sprite.setCollideWorldBounds(false);
+        this.sprite.setRotation(Math.PI); // Rotate 180 degrees to face downward
         
         // Enemy properties
         this.speed = 150;
