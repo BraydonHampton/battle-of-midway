@@ -10,6 +10,10 @@ export default class EnemyManager {
         this.spawnTimer = 0;
         this.spawnDelay = 2000;
         this.aircraftTypes = ['Aircraft_01', 'Aircraft_02', 'Aircraft_03'];
+        this.flightPatterns = ['straight', 'zigzag', 'diagonal', 'swooping'];
+        
+        // Enemy bullets
+        this.enemyBullets = scene.physics.add.group();
         
         // Spawn boundaries
         this.spawnMinX = 50;
@@ -24,13 +28,39 @@ export default class EnemyManager {
             this.spawnTimer = time + this.spawnDelay;
         }
         
-        // Update all enemies
-        this.enemyInstances.forEach((enemy, index) => {
-            enemy.update();
+        // Update all enemies - iterate backwards to avoid index shifting
+        for (let i = this.enemyInstances.length - 1; i >= 0; i--) {
+            const enemy = this.enemyInstances[i];
+            enemy.update(time);
+            
+            // Collect enemy bullets into the group for collision detection
+            enemy.getBullets().forEach(bullet => {
+                if (bullet && bullet.sprite && bullet.sprite.active && !this.enemyBullets.contains(bullet.sprite)) {
+                    this.enemyBullets.add(bullet.sprite);
+                }
+            });
+            
             // Remove destroyed enemies from array
             if (!enemy.sprite || !enemy.sprite.active) {
-                this.enemyInstances.splice(index, 1);
+                this.enemyInstances.splice(i, 1);
             }
+        }
+        
+        // Clean up orphaned enemy bullets that are off-screen
+        const bulletsToRemove = [];
+        this.enemyBullets.children.entries.forEach(bulletSprite => {
+            if (bulletSprite.bulletInstance) {
+                bulletSprite.bulletInstance.update();
+                // Mark for removal if destroyed
+                if (!bulletSprite.active) {
+                    bulletsToRemove.push(bulletSprite);
+                }
+            }
+        });
+        
+        // Remove marked bullets (separate loop to avoid modification during iteration)
+        bulletsToRemove.forEach(bulletSprite => {
+            this.enemyBullets.remove(bulletSprite);
         });
     }
     
@@ -38,10 +68,11 @@ export default class EnemyManager {
         const x = Phaser.Math.Between(this.spawnMinX, this.spawnMaxX);
         const y = this.spawnY;
         const type = Phaser.Utils.Array.GetRandom(this.aircraftTypes);
+        const pattern = Phaser.Utils.Array.GetRandom(this.flightPatterns);
         
-        console.log('EnemyManager: Spawning enemy:', type, 'at', x, y);
+        console.log('EnemyManager: Spawning enemy:', type, 'with pattern:', pattern, 'at', x, y);
         
-        const enemy = new Enemy(this.scene, x, y, type);
+        const enemy = new Enemy(this.scene, x, y, type, pattern);
         this.enemies.add(enemy.sprite);
         this.enemyInstances.push(enemy);
         
@@ -50,6 +81,10 @@ export default class EnemyManager {
     
     getEnemyGroup() {
         return this.enemies;
+    }
+    
+    getEnemyBullets() {
+        return this.enemyBullets;
     }
     
     getEnemyCount() {

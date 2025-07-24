@@ -31,7 +31,7 @@ export default class PlayerManager {
     create() {
         // Create player sprite
         this.player = this.scene.physics.add.sprite(400, 500, 'player');
-        this.player.setDisplaySize(32, 32);
+        this.player.setDisplaySize(64, 64);
         this.player.setTint(0x00ff00);
         this.player.setCollideWorldBounds(true);
         
@@ -54,7 +54,7 @@ export default class PlayerManager {
         
         for (let i = 0; i < this.lives; i++) {
             const lifeSprite = this.scene.add.sprite(x + (i * 40), y, 'player');
-            lifeSprite.setDisplaySize(24, 24);
+            lifeSprite.setDisplaySize(48, 48);
             lifeSprite.setTint(0x00ff00);
             this.lifeSprites.push(lifeSprite);
         }
@@ -114,7 +114,7 @@ export default class PlayerManager {
         if (!this.player || !this.bullets) return;
         
         const bullet = this.bullets.create(this.player.x, this.player.y - 20, 'bullet');
-        bullet.setDisplaySize(4, 10);
+        bullet.setDisplaySize(8, 20);
         bullet.setTint(0xffff00);
         bullet.setVelocityY(-500);
     }
@@ -202,7 +202,7 @@ export default class PlayerManager {
             const x = 16 + ((this.lifeSprites.length) * 40);
             const y = 560;
             const lifeSprite = this.scene.add.sprite(x, y, 'player');
-            lifeSprite.setDisplaySize(24, 24);
+            lifeSprite.setDisplaySize(48, 48);
             lifeSprite.setTint(0x00ff00);
             this.lifeSprites.push(lifeSprite);
             

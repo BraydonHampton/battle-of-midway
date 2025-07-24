@@ -46,6 +46,13 @@ export default class GameScene extends Phaser.Scene {
             color: '#cccccc'
         });
         
+        // Debug counters for development
+        this.debugText = this.add.text(16, 80, '', {
+            fontFamily: 'Arial',
+            fontSize: 12,
+            color: '#ffff00'
+        });
+        
         // Set up collision detection
         this.collisionManager.setupCollision(
             this.playerManager.getBullets(), 
@@ -68,6 +75,22 @@ export default class GameScene extends Phaser.Scene {
             }
         );
         
+        // Set up enemy bullet-player collision
+        this.collisionManager.setupCollision(
+            this.playerManager.getPlayer(),
+            this.enemyManager.getEnemyBullets(),
+            'enemyBulletPlayer',
+            (player, enemyBulletSprite) => {
+                if (!this.playerManager.isInvincible() && enemyBulletSprite && enemyBulletSprite.active) {
+                    // Destroy the bullet and damage the player
+                    if (enemyBulletSprite.bulletInstance) {
+                        enemyBulletSprite.bulletInstance.destroy();
+                    }
+                    this.playerManager.takeDamage();
+                }
+            }
+        );
+        
         // Set up player manager callbacks
         this.playerManager.setGameOverCallback(() => {
             this.scene.start('GameOverScene', { score: this.scoreManager.getScore() });
@@ -78,11 +101,26 @@ export default class GameScene extends Phaser.Scene {
         // Update managers
         this.playerManager.update(time, delta);
         this.enemyManager.update(time, delta);
+        
+        // Update debug counters
+        this.updateDebugCounters();
 
         // Return to menu
         if (this.escKey.isDown) {
             this.scene.start('MenuScene');
         }
+    }
+    
+    updateDebugCounters() {
+        const enemyCount = this.enemyManager.getEnemyCount();
+        const playerBulletCount = this.playerManager.getBullets().children.entries.length;
+        const enemyBulletCount = this.enemyManager.getEnemyBullets().children.entries.length;
+        
+        this.debugText.setText([
+            `Enemies: ${enemyCount}`,
+            `Player Bullets: ${playerBulletCount}`,
+            `Enemy Bullets: ${enemyBulletCount}`
+        ]);
     }
 
     createWaterBackground() {
